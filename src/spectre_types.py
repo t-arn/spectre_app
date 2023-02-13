@@ -17,13 +17,14 @@
 # This file is responsible for providing Spectre's constants and algorithm configuration.
 #
 # It creates the global `spectre` object and attaches the following properties to it:
-# `encoder`, `algorithm`, `purpose`, `class`, `feature`, `resultType`, `counter`, `templates`, `characters`, `identicons`:
+# `encoder`, `algorithm`, `purpose`, `clazz`, `feature`, `resultType`, `counter`, `templates`, `characters`, `identicons`:
 # They are used to obtain information on Spectre's range of capabilities and to communicate with the Spectre APIs.
 
 
 class Spectre:
     
     def __init__(self):
+        # todo: find out, what is encoder used for and how to port it
         # encoder = Object.freeze(new TextEncoder());
         pass
     # __init__
@@ -177,6 +178,30 @@ class Spectre:
         "cvc cvccvcvcv cvcv",
         "cv cvccv cvc cvcvccv"
     ]
+
+    characters = {
+        "V": "AEIOU",
+        "C": "BCDFGHJKLMNPQRSTVWXYZ",
+        "v": "aeiou",
+        "c": "bcdfghjklmnpqrstvwxyz",
+        "A": "AEIOUBCDFGHJKLMNPQRSTVWXYZ",
+        "a": "AEIOUaeiouBCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz",
+        "n": "0123456789",
+        "o": "@&%?,=[]_:-+*$#!'^~;()/.",
+        "x": "AEIOUaeiouBCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz0123456789!@#$%^&*()",
+        " ": " "
+    }
+
+    identicons = {
+        "leftArm": ["╔", "╚", "╰", "═"],
+        "body": ["█", "░", "▒", "▓", "☺", "☻"],
+        "rightArm": ["╗", "╝", "╯", "═"],
+        "accessory": [
+            "◈", "◎", "◐", "◑", "◒", "◓", "☀", "☁", "☂", "☃", "☄", "★", "☆", "☎", "☏", "⎈", "⌂", "☘", "☢", "☣",
+            "☕", "⌚", "⌛", "⏰", "⚡", "⛄", "⛅", "☔", "♔", "♕", "♖", "♗", "♘", "♙", "♚", "♛", "♜", "♝", "♞", "♟",
+            "♨", "♩", "♪", "♫", "⚐", "⚑", "⚔", "⚖", "⚙", "⚠", "⌘", "⏎", "✄", "✆", "✈", "✉", "✌",
+        ]
+    }
 
 # Spectre
     
