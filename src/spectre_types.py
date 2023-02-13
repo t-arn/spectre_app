@@ -116,6 +116,68 @@ class Spectre:
     resultName[str(resultType["stateDevice"])] = "Device"
     resultName[str(resultType["deriveKey"])] = "Key"
 
+    counter = {
+        # Use a time - based counter value, resulting in a TOTP generator.
+        "TOTP": 0,
+        # The initial value for a site's counter.
+        "initial": 1,
+    }
+    counter["default"] = counter["initial"]
+    counter["first"] = counter["TOTP"]
+    counter["last"] = 4294967295
+
+    templates = {}
+    templates[str(resultType["templateMaximum"])] = [
+        "anoxxxxxxxxxxxxxxxxx",
+        "axxxxxxxxxxxxxxxxxno"
+    ]
+    templates[str(resultType["templateLong"])] = [
+        "CvcvnoCvcvCvcv",
+        "CvcvCvcvnoCvcv",
+        "CvcvCvcvCvcvno",
+        "CvccnoCvcvCvcv",
+        "CvccCvcvnoCvcv",
+        "CvccCvcvCvcvno",
+        "CvcvnoCvccCvcv",
+        "CvcvCvccnoCvcv",
+        "CvcvCvccCvcvno",
+        "CvcvnoCvcvCvcc",
+        "CvcvCvcvnoCvcc",
+        "CvcvCvcvCvccno",
+        "CvccnoCvccCvcv",
+        "CvccCvccnoCvcv",
+        "CvccCvccCvcvno",
+        "CvcvnoCvccCvcc",
+        "CvcvCvccnoCvcc",
+        "CvcvCvccCvccno",
+        "CvccnoCvcvCvcc",
+        "CvccCvcvnoCvcc",
+        "CvccCvcvCvccno"
+    ]
+    templates[str(resultType["templateMedium"])] = [
+        "CvcnoCvc",
+        "CvcCvcno"
+    ]
+    templates[str(resultType["templateShort"])] = [
+        "Cvcn"
+    ]
+    templates[str(resultType["templateBasic"])] = [
+        "aaanaaan",
+        "aannaaan",
+        "aaannaaa"
+    ]
+    templates[str(resultType["templatePIN"])] = [
+        "nnnn"
+    ]
+    templates[str(resultType["templateName"])] = [
+        "cvccvcvcv"
+    ]
+    templates[str(resultType["templatePhrase"])] = [
+        "cvcc cvc cvccvcv cvc",
+        "cvc cvccvcvcv cvcv",
+        "cv cvccv cvc cvcvccv"
+    ]
+
 # Spectre
     
 spectre = Spectre()

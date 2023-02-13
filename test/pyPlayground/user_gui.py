@@ -6,15 +6,7 @@ from com.t_arn.pymod.ui.window import TaWindow, TaGui
 import sys
 
 
-class Spectre:
-    class algorithm:
-        v0 = 0
-        v1 = 1
-        v2 = 2
-        v3 = 3
-
 class MainGui(TaGui):
-    spectre = Spectre()
 
     def __init__(self, app, parentGui, title, **kwargs):
         super().__init__(app, parentGui, title, **kwargs)
@@ -130,10 +122,8 @@ class MainGui(TaGui):
             from spectre_types import spectre
             sitepw = None
             self.fnPrintln(f"Site password: {sitepw}")
-            self.fnPrintln(str(spectre.resultType["defaultPassword"]))
-            self.fnPrintln(str(spectre.resultType["stateDevice"]))
-            self.fnPrintln(str(spectre.clazz["template"]))
             self.fnPrintln(spectre.resultName["4160"])
+            self.fnPrintln(str(spectre.templates["31"]))
         except Exception as ex:
            G.write_debug_message(str(ex))
     # handle_btn_generate
