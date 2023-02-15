@@ -20,13 +20,16 @@
 # `encoder`, `algorithm`, `purpose`, `clazz`, `feature`, `resultType`, `counter`, `templates`, `characters`, `identicons`:
 # They are used to obtain information on Spectre's range of capabilities and to communicate with the Spectre APIs.
 
+class TextEncoder:
+    def encode(self, string):
+        return list(string.encode('utf8'))
+    # encode
+# TextEncoder
 
 class SpectreTypes:
     
     def __init__(self):
-        # todo: find out, what is encoder used for and how to port it
-        # encoder = Object.freeze(new TextEncoder());
-        pass
+         self.encoder = TextEncoder()
     # __init__
     
     algorithm = {
