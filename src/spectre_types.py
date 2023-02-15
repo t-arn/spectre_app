@@ -16,12 +16,12 @@
 #
 # This file is responsible for providing Spectre's constants and algorithm configuration.
 #
-# It creates the global `spectre` object and attaches the following properties to it:
+# It creates the global `spectreTypes` object and attaches the following properties to it:
 # `encoder`, `algorithm`, `purpose`, `clazz`, `feature`, `resultType`, `counter`, `templates`, `characters`, `identicons`:
 # They are used to obtain information on Spectre's range of capabilities and to communicate with the Spectre APIs.
 
 
-class Spectre:
+class SpectreTypes:
     
     def __init__(self):
         # todo: find out, what is encoder used for and how to port it
@@ -203,6 +203,6 @@ class Spectre:
         ]
     }
 
-# Spectre
+# SpectreTypes
     
-spectre = Spectre()
+spectreTypes = SpectreTypes()

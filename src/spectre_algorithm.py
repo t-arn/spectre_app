@@ -23,7 +23,8 @@
 # `newUserKey`, `newSiteKey`, `newSiteResult` & `newIdenticon`: 
 # They are used to perform stateless Spectre algorithm operations.
 
-from spectre_types import spectre
+import hashlib
+from spectre_types import spectreTypes
 
 class SpectreError (Exception):
     
@@ -36,9 +37,176 @@ class SpectreError (Exception):
 # SpectreError
 
 
+class Spectre:
+    
+    async def newUserKey(self, userName, userSecret, algorithmVersion=spectreTypes.algorithm["current"]):
+        print(f"[spectre]: userKey={userName}, algorithmVersion={algorithmVersion}\n")
+
+        if (algorithmVersion < spectreTypes.algorithm["first"] || algorithmVersion > spectreTypes.algorithm["last"]) {
+            raise SpectreError("algorithmVersion", f"Unsupported algorithm version: {algorithmVersion}.")
+        } else if (userName is None || len(userName)==0) {
+            raise SpectreError("userName", "Missing user name.")
+        } else if (userSecret is None || len(userSecret)==0) {
+            raise SpectreError("userSecret", "Missing user secret.")
+        }
+    
+        try:
+            let userSecretBytes = spectre.encoder.encode(userSecret);
+            let userNameBytes = spectre.encoder.encode(userName);
+            let keyPurpose = spectre.encoder.encode(spectre.purpose.authentication);
+    
+            // 1. Populate user salt: scope | #userName | userName
+            let userSalt = new Uint8Array(keyPurpose.length + 4/*sizeof(uint32)*/ + userNameBytes.length);
+            let userSaltView = new DataView(userSalt.buffer, userSalt.byteOffset, userSalt.byteLength);
+    
+            let uS = 0;
+            userSalt.set(keyPurpose, uS);
+            uS += keyPurpose.length;
+    
+            if (algorithmVersion < 3) {
+                // V0, V1, V2 incorrectly used the character length instead of the byte length.
+                userSaltView.setUint32(uS, userName.length, false/*big-endian*/);
+                uS += 4/*sizeof(uint32)*/;
+            } else {
+                userSaltView.setUint32(uS, userNameBytes.length, false/*big-endian*/);
+                uS += 4/*sizeof(uint32)*/;
+            }
+    
+            userSalt.set(userNameBytes, uS);
+            uS += userNameBytes.length;
+    
+            // 2. Derive user key from user secret and user salt.
+            let userKeyData = await scrypt(userSecretBytes, userSalt, 32768, 8, 2, 64)
+            let userKeyCrypto = await crypto.subtle.importKey("raw", userKeyData, {
+                name: "HMAC", hash: {name: "SHA-256"}
+            }, false, ["sign"])
+            return ({keyCrypto: userKeyCrypto, keyAlgorithm: algorithmVersion})
+        except Exception as ex:
+            raise ex
+    # newUserKey
+    
+    
+# Spectre
+
+spectre.newSiteKey = Object.freeze(async(userKey, siteName, keyCounter = spectre.counter.default,
+    keyPurpose = spectre.purpose.authentication, keyContext = null) => {
+    console.trace(`[spectre]: siteKey: ${siteName} (keyCounter=${keyCounter}, keyPurpose=${keyPurpose}, keyContext=${keyContext})`);
+
+    if (!crypto.subtle) {
+        throw new SpectreError("internal", `Cryptography unavailable.`);
+    } else if (!userKey) {
+        throw new SpectreError("userKey", `Missing user secret.`);
+    } else if (!siteName || !siteName.length) {
+        throw new SpectreError("siteName", `Missing site name.`);
+    } else if (keyCounter < 1 || keyCounter > 4294967295/*Math.pow(2, 32) - 1*/) {
+        throw new SpectreError("keyCounter", `Invalid counter value: ${keyCounter}.`);
+    }
+
+    try {
+        let siteNameBytes = spectre.encoder.encode(siteName);
+        let keyPurposeBytes = spectre.encoder.encode(keyPurpose);
+        let keyContextBytes = keyContext && spectre.encoder.encode(keyContext);
+
+        // 1. Populate site salt: keyPurpose | #siteName | siteName | keyCounter | #keyContext | keyContext
+        let siteSalt = new Uint8Array(
+            keyPurposeBytes.length
+            + 4/*sizeof(uint32)*/ + siteNameBytes.length
+            + 4/*sizeof(int32)*/
+            + (keyContextBytes ? 4/*sizeof(uint32)*/ + keyContextBytes.length : 0)
+        );
+        let siteSaltView = new DataView(siteSalt.buffer, siteSalt.byteOffset, siteSalt.byteLength);
+
+        let sS = 0;
+        siteSalt.set(keyPurposeBytes, sS);
+        sS += keyPurposeBytes.length;
+
+        if (userKey.keyAlgorithm < 2) {
+            // V0, V1 incorrectly used the character length instead of the byte length.
+            siteSaltView.setUint32(sS, siteName.length, false/*big-endian*/);
+            sS += 4/*sizeof(uint32)*/;
+        } else {
+            siteSaltView.setUint32(sS, siteNameBytes.length, false/*big-endian*/);
+            sS += 4/*sizeof(uint32)*/;
+        }
+
+        siteSalt.set(siteNameBytes, sS);
+        sS += siteNameBytes.length;
+
+        siteSaltView.setInt32(sS, keyCounter, false/*big-endian*/);
+        sS += 4/*sizeof(int32)*/;
+
+        if (keyContextBytes) {
+            siteSaltView.setUint32(sS, keyContextBytes.length, false/*big-endian*/);
+            sS += 4/*sizeof(uint32)*/;
+
+            siteSalt.set(keyContextBytes, sS);
+            sS += keyContextBytes.length;
+        }
+
+        // 2. Derive site key from user key and site salt.
+        let keyData = await crypto.subtle.sign({
+            name: "HMAC", hash: {name: "SHA-256"}
+        }, userKey.keyCrypto, siteSalt)
+        return ({keyData: new Uint8Array(keyData), keyAlgorithm: userKey.keyAlgorithm})
+    } catch (e) {
+        throw e;
+    }
+});
+
+spectre.newSiteResult = Object.freeze(async(userKey, siteName,
+    resultType = spectre.resultType.defaultPassword, keyCounter = spectre.counter.default,
+    keyPurpose = spectre.purpose.authentication, keyContext = null) => {
+    console.trace(`[spectre]: result: ${siteName} (resultType=${resultType}, keyCounter=${keyCounter}, keyPurpose=${keyPurpose}, keyContext=${keyContext})`);
+
+    let resultTemplates = spectre.templates[resultType]
+    if (!resultTemplates) {
+        throw new SpectreError("resultType", `Unsupported result template: ${resultType}.`);
+    }
+
+    let siteKey = await spectre.newSiteKey(userKey, siteName, keyCounter, keyPurpose, keyContext)
+    let siteKeyBytes = siteKey.keyData
+    if (siteKey.keyAlgorithm < 1) {
+        // V0 incorrectly converts bytes into 16-bit big-endian numbers.
+        let siteKeyV0Bytes = new Uint16Array(siteKeyBytes.length);
+        for (let sK = 0; sK < siteKeyV0Bytes.length; sK++) {
+            siteKeyV0Bytes[sK] = (siteKeyBytes[sK] > 127 ? 0x00ff : 0x0000) | (siteKeyBytes[sK] << 8);
+        }
+        siteKeyBytes = siteKeyV0Bytes
+    }
+
+    // key byte 0 selects the template from the available result templates.
+    let resultTemplate = resultTemplates[siteKeyBytes[0] % resultTemplates.length];
+
+    // key byte 1+ selects a character from the template's character class.
+    return resultTemplate.split("").map((characterClass, rT) => {
+        let characters = spectre.characters[characterClass];
+        return characters[siteKeyBytes[rT + 1] % characters.length];
+    }).join("");
+});
+
+spectre.newIdenticon = Object.freeze(async(userName, userSecret) => {
+    console.trace(`[spectre]: identicon: ${userName}`);
+
+    let key = await crypto.subtle.importKey("raw", spectre.encoder.encode(userSecret), {
+        name: "HMAC", hash: {name: "SHA-256"}
+    }, false, ["sign"])
+    let seed = await crypto.subtle.sign("HMAC", key, spectre.encoder.encode(userName))
+
+    return {
+        "leftArm": spectre.identicons.leftArm[seed[0] % spectre.identicons.leftArm.length],
+        "body": spectre.identicons.body[seed[0] % spectre.identicons.body.length],
+        "rightArm": spectre.identicons.rightArm[seed[0] % spectre.identicons.rightArm.length],
+        "accessory": spectre.identicons.accessory[seed[0] % spectre.identicons.accessory.length],
+    }
+});
+
+# Spectre
+spectre = Spectre()
+
+    
 class SpectreUser:
     
-    def __init__(userName, userSecret, algorithmVersion = spectre.algorithm.current) {
+    def __init__(userName, userSecret, algorithmVersion = spectreTypes.algorithm["current"] {
         self.userName = userName;
         self.algorithmVersion = algorithmVersion;
         self.identiconPromise = spectre.newIdenticon(userName, userSecret);
