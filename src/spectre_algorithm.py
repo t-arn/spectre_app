@@ -76,9 +76,7 @@ class Spectre:
             userSalt += userNameBytes
 
             # 2. Derive user key from user secret and user salt.
-            # userKeyData = hashlib.scrypt(userSecretBytes, salt=userSalt, n=32768, r=8, p=2, dklen=64)
-            # n=32768 gives the error: "Invalid parameter combination for n, r, p, maxmem."
-            userKeyData = hashlib.scrypt(userSecretBytes, salt=userSalt, n=16384, r=8, p=2, dklen=64)
+            userKeyData = hashlib.scrypt(userSecretBytes, salt=userSalt, n=32768, r=8, p=2, dklen=64, maxmem=67108864)
             userKeyCrypto = hmac.new(userKeyData, msg=None, digestmod=hashlib.sha256).digest()
             return {"keyCrypto": userKeyCrypto, "keyAlgorithm": algorithmVersion}
         except Exception as ex:
