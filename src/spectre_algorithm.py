@@ -77,13 +77,56 @@ class Spectre:
 
             # 2. Derive user key from user secret and user salt.
             userKeyData = hashlib.scrypt(userSecretBytes, salt=userSalt, n=32768, r=8, p=2, dklen=64, maxmem=67108864)
-            userKeyCrypto = hmac.new(userKeyData, msg=None, digestmod=hashlib.sha256).digest()
-            return {"keyCrypto": userKeyCrypto, "keyAlgorithm": algorithmVersion}
+            # is hashing really needed??
+            # userKeyCrypto = hmac.new(userKeyData, msg=None, digestmod=hashlib.sha256).digest()
+            return {"keyCrypto": userKeyData, "keyAlgorithm": algorithmVersion}
         except Exception as ex:
             raise ex
     # newUserKey
-
-
+    
+    def newSiteKey(self, userKey, siteName, keyCounter=spectreTypes.counter["default"], 
+        keyPurpose=spectreTypes.purpose["authentication"], keyContext=None):
+        print(f"[spectre]: siteKey={siteName}, keyCounter={keyCounter}, keyPurpose={keyPurpose}, keyContext={keyContext}")
+    
+        if userKey is None:
+            raise SpectreError("userKey", "Missing user secret.")
+        elif siteName is None or len(siteName) == 0:
+            raise SpectreError("siteName", "Missing site name.")
+        elif keyCounter < 1 or keyCounter > 4294967295: # Math.pow(2, 32) - 1
+            raise SpectreError("keyCounter", f"Invalid counter value: {keyCounter}.")
+    
+        try:
+            siteNameBytes = bytes(siteName, "utf-8")
+            keyPurposeBytes = bytes(keyPurpose, "utf-8")
+            # let keyContextBytes = keyContext && spectre.encoder.encode(keyContext);
+            keyContextBytes = None
+            if keyContext is not None:
+                keyContextBytes = bytes(keyContext, "utf-8")
+    
+            # 1. Populate site salt: keyPurpose | #siteName | siteName | keyCounter | #keyContext | keyContext
+            siteSalt = keyPurposeBytes
+    
+            if userKey["keyAlgorithm"] < 2:
+                # V0, V1 incorrectly used the character length instead of the byte length.
+                siteSalt += uint32_to_bytes(len(siteName))
+            else:
+                siteSalt += uint32_to_bytes(len(siteNameBytes))
+                    
+            siteSalt += siteNameBytes
+    
+            siteSalt += uint32_to_bytes(keyCounter)
+    
+            if keyContextBytes is not None:
+                siteSalt += uint32_to_bytes(len(keyContextBytes))
+                siteSalt += keyContextBytes
+    
+            # 2. Derive site key from user key and site salt.
+            keyData = hmac.new(userKey["keyCrypto"], msg=siteSalt, digestmod=hashlib.sha256).digest()
+            return {"keyData": keyData, "keyAlgorithm": userKey["keyAlgorithm"]}
+        except Exception as ex:
+            raise ex
+    # newSiteKey
+    
 # Spectre
 
 spectre = Spectre()
