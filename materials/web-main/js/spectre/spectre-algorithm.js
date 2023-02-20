@@ -239,5 +239,3 @@ spectre.newIdenticon = Object.freeze(async(userName, userSecret) => {
         "accessory": spectre.identicons.accessory[seed[0] % spectre.identicons.accessory.length],
     }
 });
-   }
-});
