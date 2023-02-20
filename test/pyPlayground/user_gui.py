@@ -96,9 +96,11 @@ class MainGui(TaGui):
         self.main_box.add(self.ti_name)
         self.main_box.add(toga.Label("Master password", style=Pack(flex=1)))
         self.ti_masterpw = toga.TextInput(style=Pack(flex=1))
+        self.ti_masterpw.value = "test"
         self.main_box.add(self.ti_masterpw)
         self.main_box.add(toga.Label("Site", style=Pack(flex=1)))
         self.ti_site = toga.TextInput(style=Pack(flex=1))
+        self.ti_site.value = "test.ch"
         self.main_box.add(self.ti_site)
         self.message_area = toga.MultilineTextInput(
             initial="", readonly=True, style=Pack(flex=1)
@@ -119,14 +121,25 @@ class MainGui(TaGui):
 
     def handle_btn_generate(self, widget):
         try:
-            from spectre_types import spectre
+            self.fnPrintln("Generating...")
+            from spectre_algorithm import spectreTypes, spectre
             sitepw = None
+            userKey = spectre.newUserKey(self.ti_name.value, self.ti_masterpw.value)
+            # self.fnPrintln(str(userKey))
+            # siteKey = spectre.newSiteKey(userKey, self.ti_site.value)
+            # self.fnPrintln(str(siteKey))
+            # self.fnPrintln(str(list(siteKey["keyData"])))
+            sitepw = spectre.newSiteResult(userKey, self.ti_site.value)
             self.fnPrintln(f"Site password: {sitepw}")
-            self.fnPrintln(spectre.resultName["4160"])
-            self.fnPrintln(str(spectre.templates["31"]))
+            self.fnPrintln("Done")
+        except KeyError as ex:
+           fnPrintln("\n"+str(ex))
+           G.write_debug_message(str(ex))
         except Exception as ex:
+           fnPrintln("\n"+str(ex))
            G.write_debug_message(str(ex))
     # handle_btn_generate
+
 
     def fnPrint(self, message):
         self.message_area.value += message
