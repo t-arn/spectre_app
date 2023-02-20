@@ -50,7 +50,7 @@ def uint32_to_bytes(x: int) -> bytes:
 class Spectre:
 
     def newUserKey(self, userName, userSecret, algorithmVersion=spectreTypes.algorithm["current"]):
-        print(f"[spectre]: userKey={userName}, algorithmVersion={algorithmVersion}\n")
+        print(f"[spectre]: userKey: {userName} (algorithmVersion={algorithmVersion})\n")
 
         if algorithmVersion < spectreTypes.algorithm["first"] or algorithmVersion > spectreTypes.algorithm["last"]:
             raise SpectreError("algorithmVersion", f"Unsupported algorithm version: {algorithmVersion}.")
@@ -86,7 +86,7 @@ class Spectre:
     
     def newSiteKey(self, userKey, siteName, keyCounter=spectreTypes.counter["default"], 
         keyPurpose=spectreTypes.purpose["authentication"], keyContext=None):
-        print(f"[spectre]: siteKey={siteName}, keyCounter={keyCounter}, keyPurpose={keyPurpose}, keyContext={keyContext}")
+        print(f"[spectre]: siteKey: {siteName} (keyCounter={keyCounter}, keyPurpose={keyPurpose}, keyContext={keyContext})\n")
     
         if userKey is None:
             raise SpectreError("userKey", "Missing user secret.")
@@ -126,6 +126,37 @@ class Spectre:
         except Exception as ex:
             raise ex
     # newSiteKey
+
+    def newSiteResult(self, userKey, siteName,
+        resultType=spectreTypes.resultType["defaultPassword"], 
+        keyCounter=spectreTypes.counter["default"],
+        keyPurpose=spectreTypes.purpose["authentication"], keyContext=None):
+        print(f"[spectre]: result: {siteName} (resultType={resultType}, keyCounter={keyCounter}, keyPurpose={keyPurpose}, keyContext={keyContext})\n")
+    
+        if str(resultType) not in spectreTypes.templates:
+            raise SpectreError("resultType", f"Unsupported result template: {resultType}.")
+        resultTemplates = spectreTypes.templates[str(resultType)]
+    
+        siteKey = spectre.newSiteKey(userKey, siteName, keyCounter, keyPurpose, keyContext)
+        siteKeyBytes = siteKey["keyData"]
+        if siteKey["keyAlgorithm"] < 1:
+            # V0 incorrectly converts bytes into 16-bit big-endian numbers.
+            let siteKeyV0Bytes = new Uint16Array(siteKeyBytes.length);
+            for (let sK = 0; sK < siteKeyV0Bytes.length; sK++) {
+                siteKeyV0Bytes[sK] = (siteKeyBytes[sK] > 127 ? 0x00ff : 0x0000) | (siteKeyBytes[sK] << 8);
+            }
+            siteKeyBytes = siteKeyV0Bytes
+        }
+    
+        // key byte 0 selects the template from the available result templates.
+        let resultTemplate = resultTemplates[siteKeyBytes[0] % resultTemplates.length];
+    
+        // key byte 1+ selects a character from the template's character class.
+        return resultTemplate.split("").map((characterClass, rT) => {
+            let characters = spectre.characters[characterClass];
+            return characters[siteKeyBytes[rT + 1] % characters.length];
+        }).join("");
+    });
     
 # Spectre
 
