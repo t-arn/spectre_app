@@ -132,31 +132,29 @@ class Spectre:
         keyCounter=spectreTypes.counter["default"],
         keyPurpose=spectreTypes.purpose["authentication"], keyContext=None):
         print(f"[spectre]: result: {siteName} (resultType={resultType}, keyCounter={keyCounter}, keyPurpose={keyPurpose}, keyContext={keyContext})\n")
-    
+
         if str(resultType) not in spectreTypes.templates:
             raise SpectreError("resultType", f"Unsupported result template: {resultType}.")
         resultTemplates = spectreTypes.templates[str(resultType)]
-    
+
         siteKey = spectre.newSiteKey(userKey, siteName, keyCounter, keyPurpose, keyContext)
         siteKeyBytes = siteKey["keyData"]
         if siteKey["keyAlgorithm"] < 1:
             # V0 incorrectly converts bytes into 16-bit big-endian numbers.
-            let siteKeyV0Bytes = new Uint16Array(siteKeyBytes.length);
-            for (let sK = 0; sK < siteKeyV0Bytes.length; sK++) {
-                siteKeyV0Bytes[sK] = (siteKeyBytes[sK] > 127 ? 0x00ff : 0x0000) | (siteKeyBytes[sK] << 8);
-            }
-            siteKeyBytes = siteKeyV0Bytes
-        }
-    
-        // key byte 0 selects the template from the available result templates.
-        let resultTemplate = resultTemplates[siteKeyBytes[0] % resultTemplates.length];
-    
-        // key byte 1+ selects a character from the template's character class.
-        return resultTemplate.split("").map((characterClass, rT) => {
-            let characters = spectre.characters[characterClass];
-            return characters[siteKeyBytes[rT + 1] % characters.length];
-        }).join("");
-    });
+            siteKeyBytes = bytes(str(siteKeyBytes), "utf-16")
+
+        # key byte 0 selects the template from the available result templates.
+        resultTemplate = resultTemplates[siteKeyBytes[0] % len(resultTemplates)]
+
+        # key byte 1+ selects a character from the template's character class.
+        result = ""
+        for i in range(0, len(resultTemplate)):
+            characterClass = resultTemplate[i]
+            characters = spectreTypes.characters[str(characterClass)]
+            result += str(characters[siteKeyBytes[i+1] % len(characters)])
+
+        return result
+    # newSiteResult
     
 # Spectre
 
