@@ -4,6 +4,7 @@ from toga.style.pack import COLUMN, ROW
 from pyplayground import G
 from com.t_arn.pymod.ui.window import TaWindow, TaGui
 import sys
+from spectre_algorithm import spectreTypes, spectre
 
 
 class MainGui(TaGui):
@@ -90,20 +91,47 @@ class MainGui(TaGui):
             self.app.commands.add(cmdDebug)
 
         # add content to main_box
+        self.main_box.add(toga.Label("Test App for spectre", style=Pack(flex=1, font_size=18)))
+        self.type_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        self.type_box.add(toga.Label("Result Type", style=Pack(flex=1)))
+        rtypes = spectreTypes.resultType.keys()
+        self.rtypesel = toga.Selection(items=rtypes, style=Pack(flex=1))
+        self.rtypesel.value = "templateLong"
+        self.type_box.add(self.rtypesel)
+        self.main_box.add(self.type_box)
+        
+        self.algo_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        self.algo_box.add(toga.Label("Algorithm Version", style=Pack(flex=1)))
+        versions = ["0","1","2","3"]
+        self.algosel = toga.Selection(items=versions, style=Pack(flex=1))
+        self.algosel.value = str(spectreTypes.algorithm["current"])
+        self.algo_box.add(self.algosel)
+        self.main_box.add(self.algo_box)
+
         self.main_box.add(toga.Label("Your name", style=Pack(flex=1)))
         self.ti_name = toga.TextInput(style=Pack(flex=1))
         self.ti_name.value = "Tom"
         self.main_box.add(self.ti_name)
+        
         self.main_box.add(toga.Label("Master password", style=Pack(flex=1)))
         self.ti_masterpw = toga.TextInput(style=Pack(flex=1))
         self.ti_masterpw.value = "test"
         self.main_box.add(self.ti_masterpw)
+        
         self.main_box.add(toga.Label("Site", style=Pack(flex=1)))
         self.ti_site = toga.TextInput(style=Pack(flex=1))
         self.ti_site.value = "test.ch"
         self.main_box.add(self.ti_site)
+        
+        self.main_box.add(toga.Label("Site password", style=Pack(flex=1)))
+        self.lbl_sitepw = toga.Label("", style=Pack(flex=1, font_size=18))
+        self.main_box.add(self.lbl_sitepw)
+
+        self.lbl_identicon = toga.Label("", style=Pack(flex=1, font_size=18))
+        self.main_box.add(self.lbl_identicon)
+
         self.message_area = toga.MultilineTextInput(
-            initial="", readonly=True, style=Pack(flex=1)
+            initial="", readonly=True, style=Pack(flex=1, font_size=18)
         )
         self.main_box.add(self.message_area)
         # Button bar
@@ -122,15 +150,24 @@ class MainGui(TaGui):
     def handle_btn_generate(self, widget):
         try:
             self.fnPrintln("Generating...")
-            from spectre_algorithm import spectreTypes, spectre
-            sitepw = None
-            userKey = spectre.newUserKey(self.ti_name.value, self.ti_masterpw.value)
+            rtype = self.rtypesel.value
+            algover = int(self.algosel.value)
+            userKey = spectre.newUserKey(self.ti_name.value, self.ti_masterpw.value, algover)
             # self.fnPrintln(str(userKey))
             # siteKey = spectre.newSiteKey(userKey, self.ti_site.value)
             # self.fnPrintln(str(siteKey))
             # self.fnPrintln(str(list(siteKey["keyData"])))
-            sitepw = spectre.newSiteResult(userKey, self.ti_site.value)
-            self.fnPrintln(f"Site password: {sitepw}")
+            sitepw = spectre.newSiteResult(userKey, self.ti_site.value, resultType=spectreTypes.resultType[rtype])
+            # self.fnPrintln(f"Site password: {sitepw}")
+            icon = spectre.newIdenticon(self.ti_name.value, self.ti_masterpw.value)
+            icstr = icon["leftArm"]
+            icstr += icon["body"]
+            icstr += icon["rightArm"]
+            icstr += icon["accessory"] + "   "
+            icstr += icon["color"] + "       "
+            # self.fnPrintln(icstr)
+            self.lbl_sitepw.text = sitepw
+            self.lbl_identicon.text = icstr
             self.fnPrintln("Done")
         except KeyError as ex:
            fnPrintln("\n"+str(ex))
