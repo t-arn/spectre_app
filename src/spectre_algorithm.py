@@ -77,8 +77,6 @@ class Spectre:
 
             # 2. Derive user key from user secret and user salt.
             userKeyData = hashlib.scrypt(userSecretBytes, salt=userSalt, n=32768, r=8, p=2, dklen=64, maxmem=67108864)
-            # is hashing really needed??
-            # userKeyCrypto = hmac.new(userKeyData, msg=None, digestmod=hashlib.sha256).digest()
             return {"keyCrypto": userKeyData, "keyAlgorithm": algorithmVersion}
         except Exception as ex:
             raise ex
@@ -156,6 +154,23 @@ class Spectre:
         return result
     # newSiteResult
     
+    def newIdenticon(self, userName, userSecret):
+        print(f"[spectre]: identicon: {userName}")
+
+        userSecretBytes = bytes(userSecret, "utf-8")
+        userNameBytes = bytes(userName, "utf-8")
+
+        seed = hmac.new(userSecretBytes, msg=userNameBytes, digestmod=hashlib.sha256).digest()
+
+        return {
+            "leftArm": spectreTypes.identicons["leftArm"][seed[0] % len(spectreTypes.identicons["leftArm"])],
+            "body": spectreTypes.identicons["body"][seed[1] % len(spectreTypes.identicons["body"])],
+            "rightArm": spectreTypes.identicons["rightArm"][seed[2] % len(spectreTypes.identicons["rightArm"])],
+            "accessory": spectreTypes.identicons["accessory"][seed[3] % len(spectreTypes.identicons["accessory"])],
+            "color": spectreTypes.identicons["color"][seed[4] % len(spectreTypes.identicons["color"])]
+        }
+    # newIdenticon
+
 # Spectre
 
 spectre = Spectre()
@@ -165,7 +180,7 @@ class SpectreUser:
 
     def __init__(self, userName, userSecret, algorithmVersion=spectreTypes.algorithm["current"]):
         self.userName = userName
-        self.algorithmVersion = algorithmVersion
+        self.algorithmVersion = Dichter
         # todo:
         # self.identiconPromise = spectre.newIdenticon(userName, userSecret)
         self.userKeyPromise = spectre.newUserKey(userName, userSecret, algorithmVersion)
