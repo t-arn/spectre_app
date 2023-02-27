@@ -16,20 +16,15 @@
 #
 # This file is responsible for providing Spectre's constants and algorithm configuration.
 #
-# It creates the global `spectreTypes` object and attaches the following properties to it:
-# `encoder`, `algorithm`, `purpose`, `clazz`, `feature`, `resultType`, `counter`, `templates`, `characters`, `identicons`:
+# It creates the global `spectreTypes` object with following attributes:
+# `algorithm`, `purpose`, `clazz`, `feature`, `resultType`, `counter`, `templates`, `characters`, `identicons`:
 # They are used to obtain information on Spectre's range of capabilities and to communicate with the Spectre APIs.
 
-class TextEncoder:
-    def encode(self, string):
-        return list(string.encode('utf8'))
-    # encode
-# TextEncoder
 
 class SpectreTypes:
     
     def __init__(self):
-         self.encoder = TextEncoder()
+         pass
     # __init__
     
     algorithm = {

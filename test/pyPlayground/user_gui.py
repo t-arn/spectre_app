@@ -92,15 +92,15 @@ class MainGui(TaGui):
 
         # add content to main_box
         self.main_box.add(toga.Label("Test App for spectre", style=Pack(flex=1, font_size=18)))
-        self.type_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        self.type_box.add(toga.Label("Result Type", style=Pack(flex=1)))
+        type_box = toga.Box(style=Pack(direction=ROW))
+        type_box.add(toga.Label("Result Type", style=Pack(flex=1)))
         rtypes = spectreTypes.resultType.keys()
         self.rtypesel = toga.Selection(items=rtypes, style=Pack(flex=1))
         self.rtypesel.value = "templateLong"
-        self.type_box.add(self.rtypesel)
-        self.main_box.add(self.type_box)
+        type_box.add(self.rtypesel)
+        self.main_box.add(type_box)
         
-        algo_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        algo_box = toga.Box(style=Pack(direction=ROW))
         algo_box.add(toga.Label("Algorithm Version", style=Pack(flex=1)))
         versions = ["0","1","2","3"]
         self.algosel = toga.Selection(items=versions, style=Pack(flex=1))
@@ -118,11 +118,11 @@ class MainGui(TaGui):
         self.ti_masterpw.value = "test"
         self.main_box.add(self.ti_masterpw)
         
-        site1_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        site1_box = toga.Box(style=Pack(direction=ROW))
         site1_box.add(toga.Label("Site", style=Pack(flex=1)))
         site1_box.add(toga.Label("Counter", style=Pack(flex=1)))
         self.main_box.add(site1_box)
-        site2_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        site2_box = toga.Box(style=Pack(direction=ROW))
         self.ti_site = toga.TextInput(style=Pack(flex=1))
         self.ti_site.value = "test.ch"
         site2_box.add(self.ti_site)
@@ -162,20 +162,18 @@ class MainGui(TaGui):
             rtype = self.rtypesel.value
             algover = int(self.algosel.value)
             userKey = spectre.newUserKey(self.ti_name.value, self.ti_masterpw.value, algover)
-            self.fnPrintln(str(list(userKey["keyCrypto"])))
+            # self.fnPrintln(str(list(userKey["keyCrypto"])))
             # siteKey = spectre.newSiteKey(userKey, self.ti_site.value)
             # self.fnPrintln(str(siteKey))
             # self.fnPrintln(str(list(siteKey["keyData"])))
             sitepw = spectre.newSiteResult(userKey, self.ti_site.value, 
                 resultType=spectreTypes.resultType[rtype], keyCounter=int(self.countsel.value))
-            # self.fnPrintln(f"Site password: {sitepw}")
             icon = spectre.newIdenticon(self.ti_name.value, self.ti_masterpw.value)
             icstr = icon["leftArm"]
             icstr += icon["body"]
             icstr += icon["rightArm"]
             icstr += icon["accessory"] + "   "
             icstr += icon["color"] + "       "
-            # self.fnPrintln(icstr)
             self.lbl_sitepw.text = sitepw
             self.lbl_identicon.text = icstr
             self.fnPrintln("Done")

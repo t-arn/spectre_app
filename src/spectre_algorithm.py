@@ -96,7 +96,6 @@ class Spectre:
         try:
             siteNameBytes = bytes(siteName, "utf-8")
             keyPurposeBytes = bytes(keyPurpose, "utf-8")
-            # let keyContextBytes = keyContext && spectre.encoder.encode(keyContext);
             keyContextBytes = None
             if keyContext is not None:
                 keyContextBytes = bytes(keyContext, "utf-8")
