@@ -139,7 +139,12 @@ class Spectre:
         siteKeyBytes = siteKey["keyData"]
         if siteKey["keyAlgorithm"] < 1:
             # V0 incorrectly converts bytes into 16-bit big-endian numbers.
-            siteKeyBytes = bytes(str(siteKeyBytes), "utf-16")
+            uint16_array = []
+            for sK in range(0, len(siteKeyBytes)):
+                h = 0x00ff if siteKeyBytes[sK] > 127 else 0x0000
+                i = h | (siteKeyBytes[sK] << 8)
+                uint16_array.append(i)
+            siteKeyBytes = uint16_array
 
         # key byte 0 selects the template from the available result templates.
         resultTemplate = resultTemplates[siteKeyBytes[0] % len(resultTemplates)]

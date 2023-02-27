@@ -100,13 +100,13 @@ class MainGui(TaGui):
         self.type_box.add(self.rtypesel)
         self.main_box.add(self.type_box)
         
-        self.algo_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        self.algo_box.add(toga.Label("Algorithm Version", style=Pack(flex=1)))
+        algo_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        algo_box.add(toga.Label("Algorithm Version", style=Pack(flex=1)))
         versions = ["0","1","2","3"]
         self.algosel = toga.Selection(items=versions, style=Pack(flex=1))
         self.algosel.value = str(spectreTypes.algorithm["current"])
-        self.algo_box.add(self.algosel)
-        self.main_box.add(self.algo_box)
+        algo_box.add(self.algosel)
+        self.main_box.add(algo_box)
 
         self.main_box.add(toga.Label("Your name", style=Pack(flex=1)))
         self.ti_name = toga.TextInput(style=Pack(flex=1))
@@ -118,11 +118,20 @@ class MainGui(TaGui):
         self.ti_masterpw.value = "test"
         self.main_box.add(self.ti_masterpw)
         
-        self.main_box.add(toga.Label("Site", style=Pack(flex=1)))
+        site1_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        site1_box.add(toga.Label("Site", style=Pack(flex=1)))
+        site1_box.add(toga.Label("Counter", style=Pack(flex=1)))
+        self.main_box.add(site1_box)
+        site2_box = toga.Box(style=Pack(direction=ROW, padding=5))
         self.ti_site = toga.TextInput(style=Pack(flex=1))
         self.ti_site.value = "test.ch"
-        self.main_box.add(self.ti_site)
-        
+        site2_box.add(self.ti_site)
+        counter = ["1","2","3","4","5"]
+        self.countsel = toga.Selection(items=counter, style=Pack(flex=1))
+        self.countsel.value = "1"
+        site2_box.add(self.countsel)
+        self.main_box.add(site2_box)
+
         self.main_box.add(toga.Label("Site password", style=Pack(flex=1)))
         self.lbl_sitepw = toga.Label("", style=Pack(flex=1, font_size=18))
         self.main_box.add(self.lbl_sitepw)
@@ -131,7 +140,7 @@ class MainGui(TaGui):
         self.main_box.add(self.lbl_identicon)
 
         self.message_area = toga.MultilineTextInput(
-            initial="", readonly=True, style=Pack(flex=1, font_size=18)
+            initial="", readonly=False, style=Pack(flex=1, font_size=18)
         )
         self.main_box.add(self.message_area)
         # Button bar
@@ -153,11 +162,12 @@ class MainGui(TaGui):
             rtype = self.rtypesel.value
             algover = int(self.algosel.value)
             userKey = spectre.newUserKey(self.ti_name.value, self.ti_masterpw.value, algover)
-            # self.fnPrintln(str(userKey))
+            self.fnPrintln(str(list(userKey["keyCrypto"])))
             # siteKey = spectre.newSiteKey(userKey, self.ti_site.value)
             # self.fnPrintln(str(siteKey))
             # self.fnPrintln(str(list(siteKey["keyData"])))
-            sitepw = spectre.newSiteResult(userKey, self.ti_site.value, resultType=spectreTypes.resultType[rtype])
+            sitepw = spectre.newSiteResult(userKey, self.ti_site.value, 
+                resultType=spectreTypes.resultType[rtype], keyCounter=int(self.countsel.value))
             # self.fnPrintln(f"Site password: {sitepw}")
             icon = spectre.newIdenticon(self.ti_name.value, self.ti_masterpw.value)
             icstr = icon["leftArm"]
