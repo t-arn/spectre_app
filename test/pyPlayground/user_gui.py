@@ -4,7 +4,7 @@ from toga.style.pack import COLUMN, ROW
 from pyplayground import G
 from com.t_arn.pymod.ui.window import TaWindow, TaGui
 import sys
-from spectre_algorithm import spectreTypes, spectre
+from spectre_algorithm import spectreTypes, SpectreUser, spectre
 
 
 class MainGui(TaGui):
@@ -132,7 +132,9 @@ class MainGui(TaGui):
         site2_box.add(self.countsel)
         self.main_box.add(site2_box)
 
-        self.main_box.add(toga.Label("Site password", style=Pack(flex=1)))
+        self.main_box.add(toga.Label("Site login and password", style=Pack(flex=1)))
+        self.lbl_sitelogin = toga.Label("", style=Pack(flex=1, font_size=18))
+        self.main_box.add(self.lbl_sitelogin)
         self.lbl_sitepw = toga.Label("", style=Pack(flex=1, font_size=18))
         self.main_box.add(self.lbl_sitepw)
 
@@ -159,30 +161,32 @@ class MainGui(TaGui):
     def handle_btn_generate(self, widget):
         try:
             self.fnPrintln("Generating...")
-            rtype = self.rtypesel.value
+            username = self.ti_name.value
+            masterpw = self.ti_masterpw.value
             algover = int(self.algosel.value)
-            userKey = spectre.newUserKey(self.ti_name.value, self.ti_masterpw.value, algover)
-            # self.fnPrintln(str(list(userKey["keyCrypto"])))
-            # siteKey = spectre.newSiteKey(userKey, self.ti_site.value)
-            # self.fnPrintln(str(siteKey))
-            # self.fnPrintln(str(list(siteKey["keyData"])))
-            sitepw = spectre.newSiteResult(userKey, self.ti_site.value, 
-                resultType=spectreTypes.resultType[rtype], keyCounter=int(self.countsel.value))
-            icon = spectre.newIdenticon(self.ti_name.value, self.ti_masterpw.value)
+            rtype = self.rtypesel.value
+            site = self.ti_site.value
+            counter = int(self.countsel.value)
+            # userKey = spectre.newUserKey(username, masterpw, algover)
+            # sitepw = spectre.newSiteResult(userKey, site, resultType=spectreTypes.resultType[rtype], keyCounter=counter)
+            # icon = spectre.newIdenticon(username, masterpw)
+            user = SpectreUser(username, masterpw, algorithmVersion=algover)
+            user.test()
+            sitelogin = user.login(site, keyCounter=counter)
+            sitepw = user.password(site, resultType=spectreTypes.resultType[rtype], keyCounter=counter)
+            icon = user.identicon
             icstr = icon["leftArm"]
             icstr += icon["body"]
             icstr += icon["rightArm"]
             icstr += icon["accessory"] + "   "
             icstr += icon["color"] + "       "
+            self.lbl_sitelogin.text = sitelogin
             self.lbl_sitepw.text = sitepw
             self.lbl_identicon.text = icstr
             self.fnPrintln("Done")
-        except KeyError as ex:
-           fnPrintln("\n"+str(ex))
-           G.write_debug_message(str(ex))
-        except Exception as ex:
-           fnPrintln("\n"+str(ex))
-           G.write_debug_message(str(ex))
+        except BaseException as ex:
+            G.write_debug_message(str(ex))
+            self.fnPrintln("\n"+str(ex))
     # handle_btn_generate
 
 

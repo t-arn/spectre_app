@@ -184,51 +184,40 @@ class SpectreUser:
 
     def __init__(self, userName, userSecret, algorithmVersion=spectreTypes.algorithm["current"]):
         self.userName = userName
-        self.algorithmVersion = Dichter
-        # todo:
-        # self.identiconPromise = spectre.newIdenticon(userName, userSecret)
-        self.userKeyPromise = spectre.newUserKey(userName, userSecret, algorithmVersion)
-
+        self.algorithmVersion = algorithmVersion
+        self.identicon = spectre.newIdenticon(userName, userSecret)
+        self.userKey = spectre.newUserKey(userName, userSecret, algorithmVersion)
     # __init__
 
     def password(self, siteName, resultType=spectreTypes.resultType["defaultPassword"],
                  keyCounter=spectreTypes.counter["default"], keyContext=None):
-        # not used?
-        # userKey = self.userKeyPromise
         return self.result(siteName, resultType, keyCounter, spectreTypes.purpose["authentication"], keyContext)
-
     # password
 
     def login(self, siteName, resultType=spectreTypes.resultType["defaultLogin"],
               keyCounter=spectreTypes.counter["default"], keyContext=None):
-        userKey = self.userKeyPromise
-        return self.result(userKey, siteName, resultType, keyCounter, spectreTypes.purpose["identification"],
-                           keyContext)
-
+        return self.result(siteName, resultType, keyCounter, spectreTypes.purpose["identification"], keyContext)
     # login
 
     def answer(self, siteName, resultType=spectreTypes.resultType["defaultAnswer"],
                keyCounter=spectreTypes.counter["default"], keyContext=None):
-        userKey = self.userKeyPromise
-        return self.result(userKey, siteName, resultType, keyCounter, spectreTypes.purpose["recovery"], keyContext)
-
+        return self.result(siteName, resultType, keyCounter, spectreTypes.purpose["recovery"], keyContext)
     # answer
 
     def result(self, siteName, resultType, keyCounter, keyPurpose, keyContext):
-        userKey = self.userKeyPromise
-        return spectre.newSiteResult(userKey, siteName, resultType, keyCounter, keyPurpose, keyContext)
-
+        if self.userKey is None:
+            raise SpectreError("invalidate", "User logged out.")
+        return spectre.newSiteResult(self.userKey, siteName, resultType, keyCounter, keyPurpose, keyContext)
     # result
 
     def invalidate(self):
-        self.userKeyPromise = SpectreError("invalidate", "User logged out.")
-
+        self.userKey = None
     # invalidate
 
     @staticmethod
     def test():
         user = SpectreUser("Robert Lee Mitchell", "banana colored duckling")
-        password = user.authenticate("masterpasswordapp.com")
+        password = user.password("masterpasswordapp.com")
         if password != "Jejr5[RepuSosp":
             raise Exception("Internal consistency test failed.")
     # test
