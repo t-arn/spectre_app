@@ -7,7 +7,7 @@ How to test
    in the built-in help
 3. Exit pyPlayground (on Android, you need to completely
    close the app using the task manager)
-4. Copy following files to the user data folder:
+4. Copy following files to the app's data directory:
      user_gui.py
      spectre_algorithm.py
      spectre_types.py
